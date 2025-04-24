@@ -1,63 +1,83 @@
 package main
 
-import "fmt"
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+)
 
-func main() {
-	// http.HandleFunc("/weather/", weatherHandler)
-	fmt.Println("Testing git")
-
+type Post struct {
+	Api     string `json:"api_key"`
+	Options info   `json:"options,omitempty"`
 }
 
-// type Post struct {
-// 	data string `json:"data"`
-// }
+type info struct {
+	Location string `json:"location"`
+}
 
-// func main() {
-// 	err := godotenv.Load(".env")
-// 	if err != nil {
-// 		log.Fatal("Error loading file")
-// 	}
-// 	// url := os.Getenv("url")
-// 	// api := os.Getenv("api_key")
-// 	// option := os.Getenv("option")
+type RespData struct {
+	Data kIndex `json:"data,omitempty"`
+}
 
-// 	url := os.Getenv("url2")
-// 	api := os.Getenv("api_key2")
-// 	typ := os.Getenv("type")
-// 	q := os.Getenv("location")
+type kIndex struct {
+	Index      string `json:"index"`
+	Valid_time string `json:"valid_time"`
+}
 
-// 	// body := []byte(`{
-// 	// 	"locations": {
-// 	// 		"q: "Sydney"}
-// 	// }`)
+func main() {
 
-// 	posturl := url + typ + api + q
+	reqData := Post{
+		Api: "716b58a2-ff50-4cfd-aa72-aa81a50ef62d",
+		Options: info{
+			Location: "Sydney",
+		},
+	}
 
-// 	r, err := http.NewRequest("POST", posturl, nil)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	fmt.Println(r.Body)
+	jsonData, err := json.Marshal(reqData)
+	if err != nil {
+		fmt.Println(("Having an error with Marshal"))
+	}
 
-// 	r.Header.Add("Content-Type", "application/json")
+	url := "https://sws-data.sws.bom.gov.au/api/v1/"
+	typ := "get-k-index"
 
-// 	client := &http.Client{}
-// 	res, err := client.Do(r)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	fmt.Println(res.Body)
-// 	defer res.Body.Close()
+	posturl := url + typ
 
-// 	post := &Post{}
-// 	deff := json.NewDecoder(res.Body).Decode(post)
-// 	if deff != nil {
-// 		panic(deff)
-// 	}
+	res, err := http.NewRequest("POST", posturl, bytes.NewBuffer(jsonData))
+	if err != nil {
+		fmt.Println("Issue with POST request, %d")
+	}
+	// fmt.Println(r.Body)
 
-// 	if res.StatusCode != http.StatusCreated {
-// 		panic(res.Status)
-// 	}
-// 	fmt.Println(res.Body)
-// 	fmt.Println("Data:", post.data)
-// }
+	// r.Header.Add("Content-Type", "application/json")
+
+	// client := &http.Client{}
+	// res, err := client.Do(r)
+	// if err != nil {
+	// 	fmt.Println("Issue with client.Do, %d")
+	// }
+
+	defer res.Body.Close()
+
+	presp, prerr := io.ReadAll(res.Body)
+	if prerr != nil {
+		panic(err)
+	}
+	fmt.Println(string(presp))
+
+	// post := RespData{
+	// 	Data: kIndex{
+	// 		Index:      "",
+	// 		Valid_time: "",
+	// 	},
+	// }
+	// derr := json.NewDecoder(res.Body).Decode(post)
+	// if derr != nil {
+	// 	panic("This is the decoder error, %d")
+	// }
+
+	// fmt.Println("This is the status code: ", res.StatusCode)
+	// fmt.Println("Data:", post.Data)
+}
