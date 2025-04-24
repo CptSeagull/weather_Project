@@ -5,7 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"os"
+
+	"github.com/joho/godotenv"
 )
 
 type Post struct {
@@ -18,20 +22,31 @@ type info struct {
 }
 
 type RespData struct {
-	Data kIndex `json:"data,omitempty"`
+	Data kIndex `json:"data"`
 }
 
 type kIndex struct {
-	Index      string `json:"index"`
-	Valid_time string `json:"valid_time"`
+	Index         string `json:"index"`
+	Valid_time    string `json:"valid_time"`
+	Analysis_time string `json:"analysis_time"`
 }
 
 func main() {
 
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatal("Unable to load the .env file")
+	}
+
+	api_Key := os.Getenv("api")
+
+	os.Setenv("Key", "")
+	os.Setenv("Loc", "Sydney")
+
 	reqData := Post{
-		Api: "716b58a2-ff50-4cfd-aa72-aa81a50ef62d",
+		Api: os.Getenv(api_Key),
 		Options: info{
-			Location: "Sydney",
+			Location: os.Getenv("Loc"),
 		},
 	}
 
@@ -49,35 +64,23 @@ func main() {
 	if err != nil {
 		fmt.Println("Issue with POST request, %d")
 	}
-	// fmt.Println(r.Body)
 
-	// r.Header.Add("Content-Type", "application/json")
-
-	// client := &http.Client{}
-	// res, err := client.Do(r)
-	// if err != nil {
-	// 	fmt.Println("Issue with client.Do, %d")
-	// }
+	res.Header.Add("Content-Type", "application/json")
 
 	defer res.Body.Close()
 
-	presp, prerr := io.ReadAll(res.Body)
-	if prerr != nil {
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
 		panic(err)
 	}
-	fmt.Println(string(presp))
 
-	// post := RespData{
-	// 	Data: kIndex{
-	// 		Index:      "",
-	// 		Valid_time: "",
-	// 	},
-	// }
-	// derr := json.NewDecoder(res.Body).Decode(post)
-	// if derr != nil {
-	// 	panic("This is the decoder error, %d")
-	// }
+	var data kIndex
 
-	// fmt.Println("This is the status code: ", res.StatusCode)
-	// fmt.Println("Data:", post.Data)
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(data.Index, data.Valid_time, data.Analysis_time)
+	fmt.Println(body)
 }
