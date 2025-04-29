@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -12,24 +11,26 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type Post struct {
-	Api     string `json:"api_key"`
-	Options info   `json:"options,omitempty"`
-}
+type (
+	Post struct {
+		Api     string `json:"api_key"`
+		Options `json:"options"`
+	}
 
-type info struct {
-	Location string `json:"location"`
-}
+	Options struct {
+		Location string `json:"location"`
+	}
 
-type RespData struct {
-	Data kIndex `json:"data"`
-}
+	RespData struct {
+		Data
+	}
 
-type kIndex struct {
-	Index         string `json:"index"`
-	Valid_time    string `json:"valid_time"`
-	Analysis_time string `json:"analysis_time"`
-}
+	Data struct {
+		index         string `json:"index"`
+		valid_time    string `json:"valid_time"`
+		analysis_time string `json:"analysis_time"`
+	}
+)
 
 func main() {
 
@@ -40,15 +41,14 @@ func main() {
 
 	api_Key := os.Getenv("api")
 
-	os.Setenv("Key", "")
-	os.Setenv("Loc", "Sydney")
-
 	reqData := Post{
-		Api: os.Getenv(api_Key),
-		Options: info{
-			Location: os.Getenv("Loc"),
+		Api: api_Key,
+		Options: Options{
+			Location: "Sydney",
 		},
 	}
+
+	fmt.Println(reqData)
 
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
@@ -60,27 +60,30 @@ func main() {
 
 	posturl := url + typ
 
-	res, err := http.NewRequest("POST", posturl, bytes.NewBuffer(jsonData))
+	r, err := http.NewRequest("POST", posturl, bytes.NewBuffer(jsonData))
 	if err != nil {
 		fmt.Println("Issue with POST request, %d")
 	}
 
-	res.Header.Add("Content-Type", "application/json")
+	r.Header.Add("Content-Type", "application/json")
+	r.Header.Add("Content-Type", "charset=UTF-8")
+
+	client := &http.Client{}
+	res, err := client.Do(r)
+	if err != nil {
+		fmt.Println("Issue with client.Do")
+		return
+	}
 
 	defer res.Body.Close()
 
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		panic(err)
+	fmt.Println(res.StatusCode)
+
+	data := &Data{}
+	derr := json.NewDecoder(res.Body).Decode(data)
+	if derr != nil {
+		panic(derr)
 	}
 
-	var data kIndex
-
-	err = json.Unmarshal(body, &data)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println(data.Index, data.Valid_time, data.Analysis_time)
-	fmt.Println(body)
+	fmt.Println(string(data.index))
 }
