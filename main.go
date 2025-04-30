@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 )
 
@@ -32,5 +33,5 @@ func main() {
 	if derr != nil {
 		log.Fatalln(derr)
 	}
-
+	fmt.Println(data.Data)
 }

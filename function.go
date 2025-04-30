@@ -12,6 +12,7 @@ import (
 )
 
 func setEnv() (envApi string, envUrl string, envTyp string) {
+	// Get environment variable from .env file
 	err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatal("Unable to load the .env file")
@@ -25,6 +26,7 @@ func setEnv() (envApi string, envUrl string, envTyp string) {
 }
 
 func NewRequest(posturl string, jsonData []byte) (res *http.Request) {
+	// Setup HTTP request command - Needs endpoint URL and Request body
 	r, err := http.NewRequest("POST", posturl, bytes.NewBuffer(jsonData))
 	if err != nil {
 		fmt.Println("Issue with POST request", err)
@@ -33,10 +35,12 @@ func NewRequest(posturl string, jsonData []byte) (res *http.Request) {
 }
 
 func AddHeader(r *http.Request) {
+	//Add header type to HTTP Request
 	r.Header.Add("Content-Type", "application/json")
 }
 
 func Client(req *http.Request) (resp *http.Response) {
+	//Client setup to post Request and returns Response
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		fmt.Println("Issue with Client.Do:", err)
@@ -50,6 +54,7 @@ func Client(req *http.Request) (resp *http.Response) {
 }
 
 func jsonMarshal(reqData Post) []byte {
+	//Changes data in struct into Json with []bytes
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
 		fmt.Println(("Having an error with Marshal"))
