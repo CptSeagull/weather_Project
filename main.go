@@ -1,14 +1,11 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
-	"os"
-
-	"github.com/joho/godotenv"
 )
 
 type (
@@ -22,68 +19,57 @@ type (
 	}
 
 	RespData struct {
-		Data
+		Data `json:"data"`
 	}
 
 	Data struct {
-		index         string `json:"index"`
-		valid_time    string `json:"valid_time"`
-		analysis_time string `json:"analysis_time"`
+		Index         int    `json:"index,omitempty"`
+		Valid_time    string `json:"valid_time,omitempty"`
+		Analysis_time string `json:"analysis_time,omitempty"`
 	}
 )
 
 func main() {
 
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Fatal("Unable to load the .env file")
-	}
-
-	api_Key := os.Getenv("api")
+	api, url, typ := setEnv()
 
 	reqData := Post{
-		Api: api_Key,
+		Api: api,
 		Options: Options{
 			Location: "Sydney",
 		},
 	}
 
-	fmt.Println(reqData)
-
-	jsonData, err := json.Marshal(reqData)
-	if err != nil {
-		fmt.Println(("Having an error with Marshal"))
-	}
-
-	url := "https://sws-data.sws.bom.gov.au/api/v1/"
-	typ := "get-k-index"
+	jsonData := jsonMarshal(reqData)
 
 	posturl := url + typ
 
-	r, err := http.NewRequest("POST", posturl, bytes.NewBuffer(jsonData))
-	if err != nil {
-		fmt.Println("Issue with POST request, %d")
-	}
+	r := NewRequest(posturl, jsonData)
+	AddHeader(r)
 
-	r.Header.Add("Content-Type", "application/json")
-	r.Header.Add("Content-Type", "charset=UTF-8")
-
-	client := &http.Client{}
-	res, err := client.Do(r)
+	res, err := http.DefaultClient.Do(r)
 	if err != nil {
-		fmt.Println("Issue with client.Do")
-		return
+		fmt.Println("Issue with Client.Do:", err)
 	}
 
 	defer res.Body.Close()
 
 	fmt.Println(res.StatusCode)
 
-	data := &Data{}
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	sb := string(body)
+
+	fmt.Println(sb)
+
+	data := &RespData{}
 	derr := json.NewDecoder(res.Body).Decode(data)
 	if derr != nil {
-		panic(derr)
+		log.Fatalln(derr)
 	}
-
-	fmt.Println(string(data.index))
+	// fmt.Println(data.Index)
+	// fmt.Println(data.Valid_time)
+	// fmt.Println(data.Analysis_time)
 }
