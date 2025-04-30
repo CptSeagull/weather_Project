@@ -36,6 +36,19 @@ func AddHeader(r *http.Request) {
 	r.Header.Add("Content-Type", "application/json")
 }
 
+func Client(req *http.Request) (resp *http.Response) {
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		fmt.Println("Issue with Client.Do:", err)
+	}
+
+	if res.StatusCode != 200 {
+		fmt.Println("Issue with HTTP request: ", res.StatusCode)
+	}
+
+	return res
+}
+
 func jsonMarshal(reqData Post) []byte {
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {

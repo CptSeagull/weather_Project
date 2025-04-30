@@ -5,28 +5,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net/http"
-)
-
-type (
-	Post struct {
-		Api     string `json:"api_key"`
-		Options `json:"options"`
-	}
-
-	Options struct {
-		Location string `json:"location"`
-	}
-
-	RespData struct {
-		Data `json:"data"`
-	}
-
-	Data struct {
-		Index         int    `json:"index,omitempty"`
-		Valid_time    string `json:"valid_time,omitempty"`
-		Analysis_time string `json:"analysis_time,omitempty"`
-	}
 )
 
 func main() {
@@ -36,7 +14,7 @@ func main() {
 	reqData := Post{
 		Api: api,
 		Options: Options{
-			Location: "Sydney",
+			Location: "Australian region",
 		},
 	}
 
@@ -47,14 +25,13 @@ func main() {
 	r := NewRequest(posturl, jsonData)
 	AddHeader(r)
 
-	res, err := http.DefaultClient.Do(r)
-	if err != nil {
-		fmt.Println("Issue with Client.Do:", err)
-	}
+	res := Client(r)
 
 	defer res.Body.Close()
 
-	fmt.Println(res.StatusCode)
+	if res.StatusCode != 200 {
+		fmt.Println("Issue with HTTP request: ", res.StatusCode)
+	}
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -69,7 +46,7 @@ func main() {
 	if derr != nil {
 		log.Fatalln(derr)
 	}
-	// fmt.Println(data.Index)
-	// fmt.Println(data.Valid_time)
-	// fmt.Println(data.Analysis_time)
+	fmt.Println(data.Data.Index)
+	fmt.Println(data.Data.Valid_time)
+	fmt.Println(data.Analysis_time)
 }
