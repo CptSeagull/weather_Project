@@ -11,11 +11,11 @@ type (
 	}
 
 	RespData struct {
-		Data `json:"data"`
+		Data [][]Data `json:"data"`
 	}
 
 	Data struct {
-		Index         int    `json:"index,omitempty"`
+		Index         int    `json:"index,string"`
 		Valid_time    string `json:"valid_time,omitempty"`
 		Analysis_time string `json:"analysis_time,omitempty"`
 	}
